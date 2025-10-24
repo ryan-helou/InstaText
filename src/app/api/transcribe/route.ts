@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { instagramGetUrl } from "instagram-url-direct";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,6 +9,27 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    // Check global rate limit
+    const rateLimit = checkRateLimit();
+
+    if (!rateLimit.allowed) {
+      const resetDate = new Date(rateLimit.resetTime);
+      return NextResponse.json(
+        {
+          error: "Daily limit reached",
+          details: `The app has reached its daily limit of 10 transcriptions. Resets at ${resetDate.toLocaleString()}`
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": "10",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateLimit.resetTime.toString(),
+          }
+        }
+      );
+    }
+
     const body = await request.json();
     const { url } = body;
 
@@ -46,10 +68,19 @@ export async function POST(request: NextRequest) {
       model: "whisper-1",
     });
 
-    return NextResponse.json({
-      transcript: transcription.text,
-      success: true,
-    });
+    return NextResponse.json(
+      {
+        transcript: transcription.text,
+        success: true,
+      },
+      {
+        headers: {
+          "X-RateLimit-Limit": "10",
+          "X-RateLimit-Remaining": rateLimit.remaining.toString(),
+          "X-RateLimit-Reset": rateLimit.resetTime.toString(),
+        }
+      }
+    );
   } catch (error) {
     console.error("Transcription error:", error);
     return NextResponse.json(
