@@ -1,25 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 export default function Home() {
   const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setError("");
-    }
-  };
 
   const handleTranscribe = async () => {
-    if (!file) {
-      setError("Please upload a video file first");
+    if (!url) {
+      setError("Please enter an Instagram Reel URL");
       return;
     }
 
@@ -28,18 +19,18 @@ export default function Home() {
     setTranscript("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
       const response = await fetch("/api/transcribe", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to transcribe");
+        throw new Error(data.details || data.error || "Failed to transcribe");
       }
 
       setTranscript(data.transcript);
@@ -72,64 +63,33 @@ export default function Home() {
             InstaText
           </h1>
           <p className="mb-8 text-center text-gray-600">
-            Transcribe your Instagram Reels instantly
+            Paste an Instagram Reel URL to get an instant transcript
           </p>
 
           <div className="space-y-6">
             {/* URL Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Instagram Reel URL (optional)
+                Instagram Reel URL
               </label>
               <input
                 type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://www.instagram.com/reel/..."
-                className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-lg transition-colors focus:border-pink-500 focus:outline-none"
+                className="w-full rounded-lg border-2 border-gray-300 px-4 py-4 text-lg transition-colors focus:border-pink-500 focus:outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !loading && url) {
+                    handleTranscribe();
+                  }
+                }}
               />
-            </div>
-
-            {/* File Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Video File
-              </label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="video/*,audio/*"
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full rounded-lg border-2 border-dashed border-gray-300 px-4 py-8 text-center transition-colors hover:border-pink-500 hover:bg-pink-50"
-              >
-                {file ? (
-                  <div>
-                    <p className="font-medium text-gray-900">{file.name}</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Click to change file
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="font-medium text-gray-600">
-                      Click to upload video
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      MP4, MOV, or any video format
-                    </p>
-                  </div>
-                )}
-              </button>
             </div>
 
             {/* Transcribe Button */}
             <button
               onClick={handleTranscribe}
-              disabled={loading || !file}
+              disabled={loading || !url}
               className="w-full rounded-lg bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 px-6 py-4 text-lg font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Transcribing..." : "Transcribe"}

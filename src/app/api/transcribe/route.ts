@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { instagramGetUrl } from "instagram-url-direct";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -7,24 +8,41 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const body = await request.json();
+    const { url } = body;
 
-    if (!file) {
+    if (!url) {
       return NextResponse.json(
-        { error: "No file provided" },
+        { error: "No URL provided" },
         { status: 400 }
       );
     }
 
-    // Convert File to format OpenAI expects
-    const buffer = await file.arrayBuffer();
-    const blob = new Blob([buffer], { type: file.type });
-    const audioFile = new File([blob], file.name, { type: file.type });
+    // Download Instagram Reel
+    console.log("Downloading from Instagram:", url);
+    const result = await instagramGetUrl(url);
+
+    if (!result || !result.url_list || result.url_list.length === 0) {
+      throw new Error("Failed to download video from Instagram");
+    }
+
+    // Get the video URL
+    const videoUrl = result.url_list[0];
+    console.log("Video URL:", videoUrl);
+
+    // Fetch the video
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      throw new Error("Failed to fetch video");
+    }
+
+    const videoBlob = await videoResponse.blob();
+    const videoFile = new File([videoBlob], "reel.mp4", { type: "video/mp4" });
 
     // Send to OpenAI Whisper API
+    console.log("Sending to Whisper API...");
     const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
+      file: videoFile,
       model: "whisper-1",
     });
 
@@ -35,7 +53,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Transcription error:", error);
     return NextResponse.json(
-      { error: "Failed to transcribe audio", details: error instanceof Error ? error.message : "Unknown error" },
+      {
+        error: "Failed to transcribe",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }
