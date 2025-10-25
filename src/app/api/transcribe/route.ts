@@ -48,9 +48,14 @@ export async function POST(request: NextRequest) {
       throw new Error("Failed to download video from Instagram");
     }
 
-    // Get the video URL
+    // Get the video URL and thumbnail
     const videoUrl = result.url_list[0];
+
+    // Get thumbnail from media_details array
+    const thumbnailUrl = result.media_details?.[0]?.thumbnail || null;
+
     console.log("Video URL:", videoUrl);
+    console.log("Thumbnail URL:", thumbnailUrl);
 
     // Fetch the video
     const videoResponse = await fetch(videoUrl);
@@ -59,6 +64,13 @@ export async function POST(request: NextRequest) {
     }
 
     const videoBlob = await videoResponse.blob();
+
+    // Check file size (OpenAI Whisper has 25MB limit)
+    const fileSizeMB = videoBlob.size / (1024 * 1024);
+    if (fileSizeMB > 25) {
+      throw new Error(`Video file is too large (${fileSizeMB.toFixed(1)}MB). Maximum size is 25MB. Try a shorter video.`);
+    }
+
     const videoFile = new File([videoBlob], "reel.mp4", { type: "video/mp4" });
 
     // Send to OpenAI Whisper API
@@ -71,6 +83,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         transcript: transcription.text,
+        thumbnail: thumbnailUrl,
         success: true,
       },
       {

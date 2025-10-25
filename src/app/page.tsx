@@ -9,6 +9,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [thumbnail, setThumbnail] = useState("");
 
   const handleTranscribe = async () => {
     if (!url) {
@@ -19,6 +20,7 @@ export default function Home() {
     setLoading(true);
     setError("");
     setTranscript("");
+    setThumbnail("");
 
     try {
       const response = await fetch("/api/transcribe", {
@@ -31,6 +33,9 @@ export default function Home() {
 
       const data = await response.json();
 
+      console.log("API Response:", data);
+      console.log("Thumbnail value:", data.thumbnail);
+
       // Get rate limit info from headers
       const rateLimitRemaining = response.headers.get("X-RateLimit-Remaining");
       if (rateLimitRemaining) {
@@ -42,6 +47,8 @@ export default function Home() {
       }
 
       setTranscript(data.transcript);
+      setThumbnail(data.thumbnail || "");
+      console.log("Thumbnail state set to:", data.thumbnail);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -69,6 +76,7 @@ export default function Home() {
     setTranscript("");
     setUrl("");
     setError("");
+    setThumbnail("");
   };
 
   return (
@@ -244,6 +252,23 @@ export default function Home() {
                         </svg>
                       </button>
                     </div>
+
+                    {/* Thumbnail Preview */}
+                    {thumbnail && (
+                      <div className="mb-5">
+                        <img
+                          src={thumbnail}
+                          alt="Reel thumbnail"
+                          className="w-full max-w-xs mx-auto rounded-xl border border-white/10"
+                          onError={(e) => {
+                            console.error("Thumbnail failed to load:", thumbnail);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          onLoad={() => console.log("Thumbnail loaded successfully")}
+                        />
+                      </div>
+                    )}
+
                     <div className="custom-scrollbar max-h-96 overflow-y-auto rounded-xl bg-black/40 p-5 ring-1 ring-white/5">
                       <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-200">
                         {transcript}
