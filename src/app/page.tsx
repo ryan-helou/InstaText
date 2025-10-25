@@ -33,9 +33,6 @@ export default function Home() {
 
       const data = await response.json();
 
-      console.log("API Response:", data);
-      console.log("Thumbnail value:", data.thumbnail);
-
       // Get rate limit info from headers
       const rateLimitRemaining = response.headers.get("X-RateLimit-Remaining");
       if (rateLimitRemaining) {
@@ -48,7 +45,6 @@ export default function Home() {
 
       setTranscript(data.transcript);
       setThumbnail(data.thumbnail || "");
-      console.log("Thumbnail state set to:", data.thumbnail);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -260,11 +256,6 @@ export default function Home() {
                           src={thumbnail}
                           alt="Reel thumbnail"
                           className="w-full max-w-xs mx-auto rounded-xl border border-white/10"
-                          onError={(e) => {
-                            console.error("Thumbnail failed to load:", thumbnail);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                          onLoad={() => console.log("Thumbnail loaded successfully")}
                         />
                       </div>
                     )}

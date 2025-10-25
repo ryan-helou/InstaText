@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Download Instagram Reel
-    console.log("Downloading from Instagram:", url);
     const result = await instagramGetUrl(url);
 
     if (!result || !result.url_list || result.url_list.length === 0) {
@@ -53,9 +52,6 @@ export async function POST(request: NextRequest) {
 
     // Get thumbnail from media_details array
     const thumbnailUrl = result.media_details?.[0]?.thumbnail || null;
-
-    console.log("Video URL:", videoUrl);
-    console.log("Thumbnail URL:", thumbnailUrl);
 
     // Fetch the video
     const videoResponse = await fetch(videoUrl);
@@ -74,7 +70,6 @@ export async function POST(request: NextRequest) {
     const videoFile = new File([videoBlob], "reel.mp4", { type: "video/mp4" });
 
     // Send to OpenAI Whisper API
-    console.log("Sending to Whisper API...");
     const transcription = await openai.audio.transcriptions.create({
       file: videoFile,
       model: "whisper-1",
@@ -95,7 +90,6 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error("Transcription error:", error);
     return NextResponse.json(
       {
         error: "Failed to transcribe",
