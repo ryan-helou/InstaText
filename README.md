@@ -39,7 +39,4 @@ npm run dev
 Then visit **http://localhost:3000**
 
 ---
-
-## 📬 Contact
-If you like the project or have suggestions, feel free to reach out!  
-💻 [instatext-mu.vercel.app](https://instatext-mu.vercel.app/)
+Built by Ryan Helou
