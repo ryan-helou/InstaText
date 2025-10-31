@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { instagramGetUrl } from "instagram-url-direct";
-import { checkRateLimit } from "@/lib/rateLimit";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -9,29 +8,17 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    // Check global rate limit
-    const rateLimit = checkRateLimit();
+    const body = await request.json();
+    const { url, password } = body;
 
-    if (!rateLimit.allowed) {
-      const resetDate = new Date(rateLimit.resetTime);
+    // Validate access password (case-insensitive)
+    const accessPassword = process.env.ACCESS_PASSWORD;
+    if (!password || !accessPassword || password.toLowerCase() !== accessPassword.toLowerCase()) {
       return NextResponse.json(
-        {
-          error: "Daily limit reached",
-          details: `The app has reached its daily limit of 10 transcriptions. Resets at ${resetDate.toLocaleString()}`
-        },
-        {
-          status: 429,
-          headers: {
-            "X-RateLimit-Limit": "10",
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": rateLimit.resetTime.toString(),
-          }
-        }
+        { error: "Invalid password" },
+        { status: 401 }
       );
     }
-
-    const body = await request.json();
-    const { url } = body;
 
     if (!url) {
       return NextResponse.json(
@@ -75,20 +62,11 @@ export async function POST(request: NextRequest) {
       model: "whisper-1",
     });
 
-    return NextResponse.json(
-      {
-        transcript: transcription.text,
-        thumbnail: thumbnailUrl,
-        success: true,
-      },
-      {
-        headers: {
-          "X-RateLimit-Limit": "10",
-          "X-RateLimit-Remaining": rateLimit.remaining.toString(),
-          "X-RateLimit-Reset": rateLimit.resetTime.toString(),
-        }
-      }
-    );
+    return NextResponse.json({
+      transcript: transcription.text,
+      thumbnail: thumbnailUrl,
+      success: true,
+    });
   } catch (error) {
     return NextResponse.json(
       {
