@@ -1,19 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import DecryptedText from "@/components/DecryptedText";
 
 export default function Home() {
   const [url, setUrl] = useState("");
+  const [password, setPassword] = useState("");
   const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [remaining, setRemaining] = useState<number | null>(null);
   const [thumbnail, setThumbnail] = useState("");
 
   const handleTranscribe = async () => {
     if (!url) {
       setError("Please enter an Instagram Reel URL");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter the access password");
       return;
     }
 
@@ -28,16 +34,10 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, password }),
       });
 
       const data = await response.json();
-
-      // Get rate limit info from headers
-      const rateLimitRemaining = response.headers.get("X-RateLimit-Remaining");
-      if (rateLimitRemaining) {
-        setRemaining(parseInt(rateLimitRemaining));
-      }
 
       if (!response.ok) {
         throw new Error(data.details || data.error || "Failed to transcribe");
@@ -71,6 +71,7 @@ export default function Home() {
   const clearTranscript = () => {
     setTranscript("");
     setUrl("");
+    setPassword("");
     setError("");
     setThumbnail("");
   };
@@ -96,16 +97,16 @@ export default function Home() {
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 blur-lg opacity-50"></div>
               </div>
               <div>
-                <span className="text-xl font-bold tracking-tight text-white">InstaText</span>
-                <div className="text-xs text-gray-500">by AI</div>
+                <span className="text-xl font-bold tracking-tight text-white">
+                  <DecryptedText text="InstaText" />
+                </span>
+                <div className="text-xs text-gray-500">by Ryan Helou</div>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-xl sm:flex">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
-                <span className="text-sm text-gray-400">
-                  {remaining !== null ? `${remaining}/10 today` : "Ready"}
-                </span>
+                <span className="text-sm text-gray-400">Ready</span>
               </div>
             </div>
           </div>
@@ -166,7 +167,32 @@ export default function Home() {
                     placeholder="https://www.instagram.com/reel/..."
                     className="relative w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-lg text-white placeholder-gray-500 backdrop-blur-xl transition-all duration-300 focus:border-purple-500/50 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !loading && url) {
+                      if (e.key === 'Enter' && !loading && url && password) {
+                        handleTranscribe();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div>
+                <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-300">
+                  <svg className="h-4 w-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                  Access Password
+                </label>
+                <div className="group/input relative">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 opacity-0 blur transition-opacity duration-300 group-focus-within/input:opacity-100"></div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter access password"
+                    className="relative w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-lg text-white placeholder-gray-500 backdrop-blur-xl transition-all duration-300 focus:border-pink-500/50 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !loading && url && password) {
                         handleTranscribe();
                       }
                     }}
@@ -177,7 +203,7 @@ export default function Home() {
               {/* Transcribe Button */}
               <button
                 onClick={handleTranscribe}
-                disabled={loading || !url}
+                disabled={loading || !url || !password}
                 className="group/btn relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 p-[2px] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
               >
                 <div className="relative rounded-[0.9rem] bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 px-6 py-5">
