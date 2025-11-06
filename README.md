@@ -21,7 +21,7 @@ Built with **Next.js** and deployed on **Vercel**.
 
 ---
 
-## 💡 How to Run Locally
+## 💡 How to Run Locally yourself
 ```bash
 # 1. Clone this repo
 git clone https://github.com/your-username/InstaText.git
