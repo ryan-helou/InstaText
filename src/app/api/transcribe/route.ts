@@ -9,16 +9,7 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { url, password } = body;
-
-    // Validate access password (case-insensitive)
-    const accessPassword = process.env.ACCESS_PASSWORD;
-    if (!password || !accessPassword || password.toLowerCase() !== accessPassword.toLowerCase()) {
-      return NextResponse.json(
-        { error: "Invalid password" },
-        { status: 401 }
-      );
-    }
+    const { url } = body;
 
     if (!url) {
       return NextResponse.json(
