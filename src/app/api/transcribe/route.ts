@@ -6,6 +6,37 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+async function getInstagramVideoUrl(instagramUrl: string) {
+  try {
+    // Use instagram-url-direct package to download reel metadata
+    const result = await instagramGetUrl(instagramUrl, {
+      retries: 3,
+      delay: 500
+    });
+
+    if (!result || !result.url_list || result.url_list.length === 0) {
+      throw new Error("No video found in Instagram post");
+    }
+
+    // Get the video URL (highest quality)
+    const videoUrl = result.url_list[0];
+
+    // Try to get thumbnail from media_details
+    let thumbnail = null;
+    if (result.media_details && Array.isArray(result.media_details) && result.media_details.length > 0) {
+      thumbnail = result.media_details[0].thumbnail || null;
+    }
+
+    return {
+      videoUrl,
+      thumbnail,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to download Instagram reel: ${errorMessage}`);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -19,17 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Download Instagram Reel
-    const result = await instagramGetUrl(url);
-
-    if (!result || !result.url_list || result.url_list.length === 0) {
-      throw new Error("Failed to download video from Instagram");
-    }
-
-    // Get the video URL and thumbnail
-    const videoUrl = result.url_list[0];
-
-    // Get thumbnail from media_details array
-    const thumbnailUrl = result.media_details?.[0]?.thumbnail || null;
+    const { videoUrl, thumbnail: thumbnailUrl } = await getInstagramVideoUrl(url);
 
     // Fetch the video
     const videoResponse = await fetch(videoUrl);
