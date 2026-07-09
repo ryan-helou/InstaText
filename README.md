@@ -1,6 +1,8 @@
-# InstaText
+# 🎙️ InstaText
 
 *Paste an Instagram Reel link, get the spoken words back as text.*
+
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white) ![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white) ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white)
 
 You find a Reel that's basically a talking-head giving a recipe, a workout, or advice, and you'd rather read it than rewatch it three times. InstaText takes the URL, pulls the video, and hands you a clean transcript you can copy or download.
 
