@@ -6,6 +6,8 @@
 
 <a href="https://instatext-mu.vercel.app"><img alt="Open instatext-mu.vercel.app" src="https://img.shields.io/badge/Open-instatext--mu.vercel.app-24292f?style=for-the-badge"></a>
 
+<!-- facts --><img alt="Video limit: 25 MB" src="https://img.shields.io/badge/Video_limit-25_MB-24292f?style=for-the-badge"> <img alt="Export: copy or .txt file" src="https://img.shields.io/badge/Export-copy_or_.txt_file-24292f?style=for-the-badge">
+
 </div>
 
 <br>
